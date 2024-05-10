@@ -1,16 +1,12 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import { observer } from 'mobx-react-lite';
+import React, { useCallback } from 'react';
+import type { PropsWithChildren } from 'react';
 import {
+  ActivityIndicator,
+  Button,
+  FlatList,
+  ListRenderItemInfo,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   useColorScheme,
@@ -19,17 +15,16 @@ import {
 
 import {
   Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import { useStore } from './src/use-store';
+import { TodoEntity } from './src/todo/todo.entity';
+import { TodosRemoteStore } from './src/todo/todo-store';
 
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
+function Section({ children, title }: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   return (
     <View style={styles.sectionContainer}>
@@ -55,51 +50,87 @@ function Section({children, title}: SectionProps): React.JSX.Element {
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+const App = observer(() => {
+  const store = useStore();
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <TodoListView todoStore={store.todosStore} />
+  );
+});
+
+type Prop = {
+  item: TodoEntity;
+}
+
+const TodoListItem = observer(({ item }: Prop) => {
+  return (
+    <View style={styles.todoContainer}>
+      <Text style={styles.todoTitle}>{item.title}</Text>
+      <Text>{item.completedDisplayName}</Text>
+      <Button title='TOGGLE' onPress={() => {
+        item.toggle();
+      }} />
+    </View>
+  );
+});
+
+class Animal {
+  name: string | undefined;
+
+  constructor(name: string | undefined) {
+      this.name = name;
+  }
+
+  get hasName(): boolean {
+      return this.name !== undefined;
+  }
+}
+
+const TodoListView = observer(({ todoStore }: { todoStore: TodosRemoteStore }) => {
+  const { todos } = todoStore;
+
+  const renderItem = useCallback(({ item }: ListRenderItemInfo<TodoEntity>) => {
+    return <TodoListItem item={item} />
+  }, []);
+
+  return (
+    <SafeAreaView>
+      <Button title='Refetch' onPress={() => todos.refetch()} />
+      {todos.isRefetching && <ActivityIndicator />}
+      <Section title={`Todos ${todoStore.filteredCount}`}>
+        {todos.isSuccess
+          ? (
+            <FlatList
+              data={todoStore.filteredTodos.slice()}
+              keyExtractor={item => item.id.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={{ gap: 6 }}
+            />
+          )
+          : <ActivityIndicator />
+        }
+      </Section>
     </SafeAreaView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,
-    paddingHorizontal: 24,
+
+  },
+  todoContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    gap: 12,
+    padding: 12,
+    backgroundColor: '#AAAAAA',
+    borderRadius: 12,
+  },
+  todoTitle: {
+    flexShrink: 1,
+    fontSize: 16,
   },
   sectionTitle: {
     fontSize: 24,
