@@ -1,67 +1,56 @@
 import { computed } from "mobx";
-import { _async, _await, _Model, idProp, Model, model, modelAction, prop } from "mobx-keystone";
+import { Model, model, modelAction, prop } from "mobx-keystone";
 
-export type Status = 'pending' | 'success' | 'failure';
-export type FetchStatus = 'idle' | 'fetching' | 'refetching';
+export type TAsyncStatus = 'pending' | 'success' | 'failure';
+export type TFetchStatus = 'idle' | 'fetching' | 'refetching';
 export type AsyncEvent = 'fetch' | 'refetch' | 'failure' | 'success';
 
 @model('AsyncStatus')
 export class AsyncStatus extends Model({
-    key: idProp,
-    status: prop<Status>('pending'),
-    fetchStatus: prop<FetchStatus>('fetching'),
+    value: prop<TAsyncStatus>(),
 }) {
-
     @modelAction
-    event(event: AsyncEvent) {
-        switch(event) {
-            case 'fetch': {
-                this.status = 'pending';
-                this.fetchStatus = 'fetching';
-                break;
-            }
-            case 'refetch': {
-                this.fetchStatus = 'refetching';
-                break;
-            }
-            case 'failure': {
-                this.status = 'failure';
-                this.fetchStatus = 'idle';
-            }
-            case 'success': {
-                this.status = 'success';
-                this.fetchStatus = 'idle';
-            }
-        }
+    public set(value: TAsyncStatus): void {
+        this.value = value;
     }
 
     @computed
-    get isPending(): boolean {
-        return this.status === 'pending';
+    public get isPending(): boolean {
+        return this.value === 'pending';
     }
 
     @computed
-    get isFetching(): boolean {
-        return this.fetchStatus === 'fetching';
+    public get isFailure(): boolean {
+        return this.value === 'failure';
     }
 
     @computed
-    get isRefetching(): boolean {
-        return this.fetchStatus === 'refetching';
+    public get isSuccess(): boolean {
+        return this.value === 'success';
+    }
+}
+
+@model('FetchStatus')
+export class FetchStatus extends Model({
+    value: prop<TFetchStatus>()
+}) {
+    @modelAction
+    public set(value: TFetchStatus): void {
+        this.value = value;
     }
 
     @computed
-    get isLoading(): boolean {
-        return this.isPending || this.isFetching || this.isRefetching;
+    public get isIdle(): boolean {
+        return this.value === 'idle';
     }
 
     @computed
-    get isFailure(): boolean {
-        return this.status === 'failure';
+    public get isFetching(): boolean {
+        return this.value === 'fetching';
     }
 
     @computed
-    get isSuccess(): boolean {
-        return this.status === 'success';
+    public get isRefetching(): boolean {
+        return this.value === 'refetching';
     }
 }

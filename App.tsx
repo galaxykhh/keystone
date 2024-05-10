@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import {
   ActivityIndicator,
@@ -19,6 +19,7 @@ import {
 import { useStore } from './src/use-store';
 import { TodoEntity } from './src/todo/todo.entity';
 import { TodosRemoteStore } from './src/todo/todo-store';
+import { getSnapshot } from 'mobx-keystone';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -50,13 +51,11 @@ function Section({ children, title }: SectionProps): React.JSX.Element {
   );
 }
 
-const App = observer(() => {
-  const store = useStore();
-
+const App = () => {
   return (
-    <TodoListView todoStore={store.todosStore} />
+    <TodoListView />
   );
-});
+};
 
 type Prop = {
   item: TodoEntity;
@@ -74,34 +73,30 @@ const TodoListItem = observer(({ item }: Prop) => {
   );
 });
 
-class Animal {
-  name: string | undefined;
 
-  constructor(name: string | undefined) {
-      this.name = name;
-  }
-
-  get hasName(): boolean {
-      return this.name !== undefined;
-  }
-}
-
-const TodoListView = observer(({ todoStore }: { todoStore: TodosRemoteStore }) => {
-  const { todos } = todoStore;
-
+const TodoListView = observer(() => {
+  const { todosStore } = useStore();
+  const { todos } = todosStore;
+  
   const renderItem = useCallback(({ item }: ListRenderItemInfo<TodoEntity>) => {
     return <TodoListItem item={item} />
   }, []);
+  
+  
+  useEffect(() => {
+    const snapshot = getSnapshot(todosStore);
+    console.log(snapshot);
+  }, [todosStore]);
 
   return (
     <SafeAreaView>
       <Button title='Refetch' onPress={() => todos.refetch()} />
       {todos.isRefetching && <ActivityIndicator />}
-      <Section title={`Todos ${todoStore.filteredCount}`}>
+      <Section title={`Todos ${todosStore.filteredCount}`}>
         {todos.isSuccess
           ? (
             <FlatList
-              data={todoStore.filteredTodos.slice()}
+              data={todosStore.filteredTodos.slice()}
               keyExtractor={item => item.id.toString()}
               renderItem={renderItem}
               contentContainerStyle={{ gap: 6 }}

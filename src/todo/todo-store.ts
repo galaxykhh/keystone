@@ -1,9 +1,9 @@
-import { Model, _async, _await, model, modelAction, modelFlow, prop, tProp, types } from "mobx-keystone";
+import { Model, _async, _await, model, modelAction, prop } from "mobx-keystone";
 import { TodoEntity } from "./todo.entity";
 import TodoApi from "./todo.api";
 import { AsyncData } from "../shared/async-data";
-import { sleep } from "../sleep";
 import { computed } from "mobx";
+import { Asserts } from "../asserts";
 
 type Filter = 'all' | 'done' | 'todo';
 
@@ -22,33 +22,27 @@ export class TodosRemoteStore extends Model({
     }
 
     @computed
-    get hasTodo(): boolean {
-        return !!this.todos.data && this.todos.data.length > 1;
-    }
+    public get filteredTodos(): TodoEntity[] {
+        if (!this.todos.isSuccess) {
+            return [];
+        }
 
-    @computed
-    get count(): number {
-        return this.todos.data?.length || 0;
-    }
-
-    @computed
-    get filteredTodos(): TodoEntity[] {
-        switch(this.filter) {
+        switch (this.filter) {
             case 'all': {
-                return this.todos.data || [];
+                return this.todos.data;
             }
             case 'done': {
-                return this.todos.data?.filter(t => t.completed) || [];
+                return this.todos.data.filter(t => t.completed);
             }
             case 'todo': {
-                return this.todos.data?.filter(t => !t.completed) || [];
+                return this.todos.data.filter(t => !t.completed);
             }
         }
     }
 
     @computed
     get filteredCount(): number {
-        if (!this.hasTodo) {
+        if (!this.todos.isSuccess) {
             return 0;
         }
 
