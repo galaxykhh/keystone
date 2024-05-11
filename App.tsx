@@ -81,12 +81,6 @@ const TodoListView = observer(() => {
   const renderItem = useCallback(({ item }: ListRenderItemInfo<TodoEntity>) => {
     return <TodoListItem item={item} />
   }, []);
-  
-  
-  useEffect(() => {
-    const snapshot = getSnapshot(todosStore);
-    console.log(snapshot);
-  }, [todosStore]);
 
   return (
     <SafeAreaView>
@@ -96,7 +90,7 @@ const TodoListView = observer(() => {
         {todos.isSuccess
           ? (
             <FlatList
-              data={todosStore.filteredTodos.slice()}
+              data={todosStore.filteredTodos}
               keyExtractor={item => item.id.toString()}
               renderItem={renderItem}
               contentContainerStyle={{ gap: 6 }}

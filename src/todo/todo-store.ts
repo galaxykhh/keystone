@@ -1,19 +1,20 @@
 import { Model, _async, _await, model, modelAction, prop } from "mobx-keystone";
 import { TodoEntity } from "./todo.entity";
 import TodoApi from "./todo.api";
-import { AsyncData } from "../shared/async-data";
-import { computed } from "mobx";
-import { Asserts } from "../asserts";
+import { computed, reaction } from "mobx";
+import Query from "../shared/query";
 
 type Filter = 'all' | 'done' | 'todo';
 
+const Todos = Query.create(TodoApi.getTodos);
+
 @model('todo/TodosRemoteStore')
 export class TodosRemoteStore extends Model({
-    todos: prop<AsyncData<TodoEntity[]>>(() => new AsyncData({})),
-    filter: prop<Filter>('done'),
+    todos: prop<InstanceType<typeof Todos>>(() => new Todos({})),
+    filter: prop<Filter>('all'),
 }) {
     protected async onInit(): Promise<void> {
-        await this.todos.fetch(TodoApi.getTodos);
+        this.todos.fetch();
     }
 
     @modelAction
