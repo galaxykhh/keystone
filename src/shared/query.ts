@@ -5,7 +5,6 @@ import { FetchStatus } from "./fetch-status";
 
 type QueryFn<T> = (() => Promise<T>);
 type QueryEvent = 'fetch' | 'refetch' | 'failure' | 'success';
-
 export default class Query {
     static create<T = unknown, E = Error>(queryFn: QueryFn<T>) {
         const QueryResultProps = Model(<T, E>() => ({
@@ -16,7 +15,7 @@ export default class Query {
         }));
         
         @model('QueryResult')
-        class QueryResult extends QueryResultProps<T, E> {
+        class QueryResult<Data extends T | undefined, Exception extends E | undefined> extends QueryResultProps<T, E> {
             @modelAction
             private event(event: QueryEvent) {
                 switch (event) {
@@ -41,7 +40,11 @@ export default class Query {
             }
     
             @modelFlow
-            public fetch = _async(function* (this: QueryResult) {
+            public fetch = _async(function* (this: QueryResult<T, E>) {
+                if (this.isSuccess) {
+                    return this.refetch();
+                }
+
                 try {
                     this.event('fetch');
     
@@ -56,7 +59,7 @@ export default class Query {
             });
     
             @modelFlow
-            public refetch = _async(function* (this: QueryResult) {
+            public refetch = _async(function* (this: QueryResult<T, E>) {
                 if (this.isLoading) {
                     return;
                 }
@@ -133,6 +136,6 @@ export default class Query {
             }
         }
 
-        return QueryResult;
+        return new QueryResult({});
     }
 }

@@ -1,5 +1,5 @@
-import { computed } from "mobx";
-import { Model, _async, _await, model, modelAction, prop } from "mobx-keystone";
+import { computed, reaction } from "mobx";
+import { Model, _async, _await, fromSnapshot, getSnapshot, model, modelAction, prop } from "mobx-keystone";
 
 @model('todo/TodoEntity')
 export class TodoEntity extends Model({
@@ -8,7 +8,6 @@ export class TodoEntity extends Model({
     title: prop<string>(),
     completed: prop<boolean>(false),
 }) {
-
     @modelAction
     public toggle() {
         this.completed = !this.completed;

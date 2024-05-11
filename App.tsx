@@ -1,67 +1,65 @@
-import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect } from 'react';
-import type { PropsWithChildren } from 'react';
 import {
   ActivityIndicator,
   Button,
-  FlatList,
-  ListRenderItemInfo,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
-
-import {
-  Colors,
-} from 'react-native/Libraries/NewAppScreen';
+import { observer } from 'mobx-react-lite';
 import { useStore } from './src/use-store';
 import { TodoEntity } from './src/todo/todo.entity';
-import { TodosRemoteStore } from './src/todo/todo-store';
-import { getSnapshot } from 'mobx-keystone';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({ children, title }: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import { TodosStore } from './src/todo/todo-store';
 
 const App = () => {
+  const store = useStore();
+
   return (
-    <TodoListView />
+    <TodoListView todosStore={store.todosStore} />
   );
 };
 
-type Prop = {
-  item: TodoEntity;
-}
+const TodoListView = observer(({ todosStore }: { todosStore: TodosStore }) => {
+  const { todos } = todosStore;
+  const { isPending } = todos;
+  const { pending, done } = todosStore;
 
-const TodoListItem = observer(({ item }: Prop) => {
+  const renderItem = useCallback((todo: TodoEntity) => {
+    return <TodoListItem key={todo.id} item={todo} />
+  }, []);
+
+  if (isPending) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <Button title='RELOAD' onPress={() => todos.fetch()} />
+      <Text style={styles.sectionTitle}>{`Pending ${pending.length}`}</Text>
+      <ScrollView style={{ flex: 1 }}>
+        <View style={{ gap: 4 }}>
+          {pending.map(todo => renderItem(todo))}
+        </View>
+      </ScrollView>
+
+      <Text style={styles.sectionTitle}>{`Done ${done.length}`}</Text>
+      <ScrollView style={{ flex: 1 }}>
+        <View style={{ gap: 4 }}>
+          {done.map(todo => renderItem(todo))}
+        </View>
+      </ScrollView>
+
+    </SafeAreaView>
+  );
+});
+
+const TodoListItem = observer(({ item }: { item: TodoEntity }) => {
   return (
     <View style={styles.todoContainer}>
       <Text style={styles.todoTitle}>{item.title}</Text>
@@ -73,40 +71,11 @@ const TodoListItem = observer(({ item }: Prop) => {
   );
 });
 
-
-const TodoListView = observer(() => {
-  const { todosStore } = useStore();
-  const { todos } = todosStore;
-  
-  const renderItem = useCallback(({ item }: ListRenderItemInfo<TodoEntity>) => {
-    return <TodoListItem item={item} />
-  }, []);
-
-  return (
-    <SafeAreaView>
-      <Button title='Refetch' onPress={() => todos.refetch()} />
-      {todos.isRefetching && <ActivityIndicator />}
-      <Section title={`Todos ${todosStore.filteredCount}`}>
-        {todos.isSuccess
-          ? (
-            <FlatList
-              data={todosStore.filteredTodos}
-              keyExtractor={item => item.id.toString()}
-              renderItem={renderItem}
-              contentContainerStyle={{ gap: 6 }}
-            />
-          )
-          : <ActivityIndicator />
-        }
-      </Section>
-    </SafeAreaView>
-  );
-});
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-
+  sectionTitle: {
+    fontSize: 32,
+    fontWeight: '600',
+    color: 'white',
   },
   todoContainer: {
     flexDirection: 'row',
@@ -120,18 +89,6 @@ const styles = StyleSheet.create({
   todoTitle: {
     flexShrink: 1,
     fontSize: 16,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
   },
 });
 

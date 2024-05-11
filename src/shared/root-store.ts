@@ -1,18 +1,14 @@
 import { Model, model, prop, registerRootStore } from "mobx-keystone";
-import { TodosRemoteStore } from "../todo/todo-store";
+import { TodosStore } from "../todo/todo-store";
 
 @model('app/RootStore')
 export class RootStore extends Model({
-    todosStore: prop<TodosRemoteStore>(),
-}) {
-    protected onAttachedToRootStore(rootStore: RootStore): void | (() => void) {
-        console.log('LOAD!');
-    }
-}
+    todosStore: prop<TodosStore>(),
+}) {}
 
 export const createRootStore = (): RootStore => {
     const rootStore = new RootStore({
-        todosStore: new TodosRemoteStore({}),
+        todosStore: new TodosStore({}),
     });
 
     registerRootStore(rootStore);
