@@ -5,6 +5,7 @@ import { FetchStatus } from "./fetch-status";
 
 type QueryFn<T> = (() => Promise<T>);
 type QueryEvent = 'fetch' | 'refetch' | 'failure' | 'success';
+
 export default class Query {
     static create<T = unknown, E = Error>(queryFn: QueryFn<T>) {
         const QueryResultProps = Model(<T, E>() => ({
@@ -16,6 +17,16 @@ export default class Query {
         
         @model('QueryResult')
         class QueryResult<Data extends T | undefined, Exception extends E | undefined> extends QueryResultProps<T, E> {
+            @modelAction
+            private setData(data: T | undefined): void {
+                this.maybeData = data;
+            }
+
+            @modelAction
+            private setError(error: E | undefined): void {
+                this.maybeError = error;
+            }
+
             @modelAction
             private event(event: QueryEvent) {
                 switch (event) {
@@ -50,10 +61,10 @@ export default class Query {
     
                     const result = yield* _await(queryFn());
     
-                    this.maybeData = result;
+                    this.setData(result);
                     this.event('success');
                 } catch (e) {
-                    this.maybeError = e as E;
+                    this.setError(e as E);
                     this.event('failure');
                 }
             });
@@ -69,18 +80,13 @@ export default class Query {
     
                     const result = yield* _await(queryFn());
     
-                    this.maybeData = result;
+                    this.setData(result);
                     this.event('success');
                 } catch (e) {
-                    this.maybeError = e as E;
+                    this.setError(e as E);
                     this.event('failure');
                 }
             });
-    
-            @modelAction
-            public setData(data: T): void {
-                this.maybeData = data;
-            }
     
             @computed
             public get isPending(): boolean {
@@ -139,3 +145,5 @@ export default class Query {
         return new QueryResult({});
     }
 }
+
+export type QueryResult<T, E = Error> = ReturnType<typeof Query.create<T, E>>;
