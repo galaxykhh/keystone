@@ -89,6 +89,28 @@ export default class Query {
                     this.event('failure');
                 }
             });
+
+            public on<R = unknown>(caseBy: {
+                pending?: () => R,
+                failure?: (error: E) => R,
+                success?: (data: T) => R,
+            }) {
+                const { pending, failure, success } = caseBy;
+
+
+
+                switch(this.status.value) {
+                    case 'pending': {
+                        return pending?.();
+                    }
+                    case 'failure': {
+                        return failure?.(this.error);
+                    }
+                    case 'success': {
+                        return success?.(this.data);
+                    }
+                }
+            }
     
             @computed
             public get isPending(): boolean {

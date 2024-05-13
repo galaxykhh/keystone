@@ -30,6 +30,33 @@ const TodoListView = observer(({ todosStore }: { todosStore: TodosStore }) => {
     return <TodoListItem key={todo.id} item={todo} />
   }, []);
 
+  return todos.on({
+    pending: () => (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    ),
+    success: () => (
+      <SafeAreaView style={{ flex: 1 }}>
+        <Button title='RELOAD' onPress={() => todos.fetch()} />
+        <Text style={styles.sectionTitle}>{`Pending ${pending.length}`}</Text>
+        <ScrollView style={{ flex: 1 }}>
+          <View style={{ gap: 4 }}>
+            {pending.map(todo => renderItem(todo))}
+          </View>
+        </ScrollView>
+
+        <Text style={styles.sectionTitle}>{`Done ${done.length}`}</Text>
+        <ScrollView style={{ flex: 1 }}>
+          <View style={{ gap: 4 }}>
+            {done.map(todo => renderItem(todo))}
+          </View>
+        </ScrollView>
+
+      </SafeAreaView>
+    ),
+  });
+
   if (isPending) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -75,7 +102,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 32,
     fontWeight: '600',
-    color: 'white',
+    color: 'black',
   },
   todoContainer: {
     flexDirection: 'row',
