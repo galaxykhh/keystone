@@ -6,7 +6,9 @@ export type MutateFunction<T = unknown, V = void> = (variables: V) => Promise<T>
 type MutationEvent = 'mutate' | 'failure' | 'success';
 
 export default class Mutation {
-    static create<T = unknown, V = void, E = Error>(mutateFn: MutateFunction<T, V>) {
+    private constructor() {}
+
+    public static create<T = unknown, V = void, E = Error>(mutateFn: MutateFunction<T, V>) {
         const MutationResultProps = Model(<T, E>() => ({
             status: prop<MutationStatus>(() => new MutationStatus({ value: 'idle' })),
             maybeData: prop<T | undefined>(undefined),

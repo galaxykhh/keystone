@@ -7,7 +7,9 @@ type QueryFn<T> = (() => Promise<T>);
 type QueryEvent = 'fetch' | 'refetch' | 'failure' | 'success';
 
 export default class Query {
-    static create<T = unknown, E = Error>(queryFn: QueryFn<T>) {
+    private constructor() {}
+    
+    public static create<T = unknown, E = Error>(queryFn: QueryFn<T>) {
         const QueryResultProps = Model(<T, E>() => ({
             status: prop<QueryStatus>(() => new QueryStatus({ value: 'pending' })),
             fetchStatus: prop<FetchStatus>(() => new FetchStatus({ value: 'fetching' })),
